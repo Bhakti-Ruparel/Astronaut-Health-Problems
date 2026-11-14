@@ -16,13 +16,20 @@ import {
 } from 'lucide-react'
 import type { SymptomId } from '../types'
 
-export const NAV_ITEMS: { path: string; label: string; icon: LucideIcon; end?: boolean }[] = [
-  { path: '/', label: 'Overview', icon: LayoutDashboard, end: true },
-  { path: '/assessment', label: 'Cognitive Assessment', icon: Brain },
-  { path: '/journal', label: 'Health Journal', icon: NotebookPen },
-  { path: '/trends', label: 'Health Trends', icon: TrendingUp },
-  { path: '/alerts', label: 'Alerts & Insights', icon: BellRing },
-  { path: '/profile', label: 'Mission Profile', icon: UserRound },
+export const NAV_ITEMS: {
+  path: string
+  label: string
+  short: string
+  icon: LucideIcon
+  mobile: 'tab' | 'more'
+  end?: boolean
+}[] = [
+  { path: '/', label: 'Home', short: 'Home', icon: LayoutDashboard, mobile: 'tab', end: true },
+  { path: '/assessment', label: 'Assessments', short: 'Tests', icon: Brain, mobile: 'tab' },
+  { path: '/journal', label: 'Health Journal', short: 'Journal', icon: NotebookPen, mobile: 'more' },
+  { path: '/trends', label: 'Health Trends', short: 'Trends', icon: TrendingUp, mobile: 'tab' },
+  { path: '/alerts', label: 'Alerts', short: 'Alerts', icon: BellRing, mobile: 'tab' },
+  { path: '/profile', label: 'Profile', short: 'Profile', icon: UserRound, mobile: 'more' },
 ]
 
 export const SYMPTOMS: { id: SymptomId; label: string; icon: LucideIcon }[] = [
