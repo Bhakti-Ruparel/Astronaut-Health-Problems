@@ -9,6 +9,11 @@ npm run dev
 ```
 Build: `npm run build`. Preview the build: `npm run preview`.
 
+## Deploy to Vercel
+1. Push this repository to GitHub and import it into [Vercel](https://vercel.com/new).
+2. Keep the detected Vite settings: build command `npm run build` and output directory `dist`.
+3. Select **Deploy**. The `vercel.json` rewrite keeps React Router routes working when opened directly or refreshed.
+
 ## Routes
 `/` Overview, `/assessment` (supports `?test=reaction|memory|attention`), `/journal`, `/trends`, `/alerts`, `/profile`.
 
