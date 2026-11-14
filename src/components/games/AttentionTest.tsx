@@ -29,9 +29,12 @@ type Phase = 'intro' | 'running'
 export function AttentionTest({
   onComplete,
   onCancel,
+  autoStart = false,
 }: {
   onComplete: (r: GameResult) => void
   onCancel: () => void
+  /** Skip the intro and start the symbol stream immediately (used after the mission countdown). */
+  autoStart?: boolean
 }) {
   const [phase, setPhase] = useState<Phase>('intro')
   const [idx, setIdx] = useState(0)
@@ -107,6 +110,25 @@ export function AttentionTest({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // One-time start. The ref is reset on cleanup so a StrictMode remount (which clears timers) restarts cleanly.
+  const started = useRef(false)
+  useEffect(() => {
+    if (!autoStart || started.current) return
+    started.current = true
+    start()
+    return () => {
+      started.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart])
+
+  const ring =
+    flash === 'hit'
+      ? 'border-ok shadow-[0_0_60px_6px_rgb(74_222_128/0.5)]'
+      : flash === 'false'
+        ? 'border-red-300 shadow-[0_0_60px_6px_rgb(248_113_113/0.5)]'
+        : 'border-cyan/40 shadow-[0_0_40px_0_rgb(85_198_232/0.25)]'
+
   return (
     <GameFrame
       title="Attention Test"
@@ -116,26 +138,43 @@ export function AttentionTest({
         onCancel()
       }}
       status={flash === 'hit' ? 'Hit' : flash === 'false' ? 'False alarm' : ''}
+      current={phase === 'intro' ? 0 : idx + 1}
+      total={ITEMS}
     >
-      <div
-        className={`flex h-56 items-center justify-center rounded-xl border-2 bg-navy transition-colors ${
-          flash === 'hit' ? 'border-ok' : flash === 'false' ? 'border-red-300' : 'border-white/15'
-        }`}
-      >
-        {phase === 'intro' ? (
+      <div className="glass relative flex h-72 flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-white/15">
+        {phase === 'intro' && !autoStart ? (
           <div className="px-4 text-center">
             <p className="mb-4 text-sm text-muted">
               Symbols appear one at a time. Respond only when you see the triangle{' '}
-              <span className="font-mono text-xl text-orange">{TARGET}</span>. Ignore everything else.
+              <span className="num text-xl text-orange">{TARGET}</span>. Ignore everything else.
             </p>
             <button type="button" className="btn btn-primary" onClick={start} autoFocus>
               Start attention test
             </button>
           </div>
         ) : (
-          <div className="font-mono text-8xl text-cyan" aria-hidden="true">
-            {visible ? stream.current[idx] : ''}
-          </div>
+          <>
+            <div
+              className={`relative flex h-48 w-48 items-center justify-center rounded-full border-2 bg-void/40 transition-[border-color,box-shadow] duration-150 ${ring}`}
+            >
+              <span
+                aria-hidden="true"
+                className="absolute inset-3 rounded-full border border-dashed border-violet-soft/30"
+              />
+              <div
+                className={`num font-display text-8xl text-cyan-bright transition-opacity duration-150 ${visible ? 'opacity-100' : 'opacity-0'}`}
+                aria-hidden="true"
+              >
+                {stream.current[idx]}
+              </div>
+            </div>
+            <p
+              aria-hidden="true"
+              className={`num mt-3 h-6 font-display text-base font-semibold ${flash === 'hit' ? 'text-ok' : 'text-red-200'}`}
+            >
+              {flash === 'hit' ? 'Hit' : flash === 'false' ? 'False alarm' : ''}
+            </p>
+          </>
         )}
       </div>
       {phase === 'running' && (
@@ -147,7 +186,7 @@ export function AttentionTest({
               e.preventDefault()
               respond()
             }}
-            className="btn btn-primary h-14 w-full max-w-sm text-base"
+            className="btn btn-primary h-16 w-full max-w-sm rounded-full text-base shadow-[0_0_30px_rgb(85_198_232/0.45)]"
           >
             I see the target {TARGET} (or press Space)
           </button>

@@ -17,9 +17,12 @@ function makeSequence(len: number): string {
 export function MemoryTest({
   onComplete,
   onCancel,
+  autoStart = false,
 }: {
   onComplete: (r: GameResult) => void
   onCancel: () => void
+  /** Skip the intro and start round 1 immediately (used after the mission countdown). */
+  autoStart?: boolean
 }) {
   const [phase, setPhase] = useState<Phase>('intro')
   const [round, setRound] = useState(0)
@@ -97,6 +100,18 @@ export function MemoryTest({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // One-time start. The ref is reset on cleanup so a StrictMode remount (which clears timers) restarts cleanly.
+  const started = useRef(false)
+  useEffect(() => {
+    if (!autoStart || started.current) return
+    started.current = true
+    startRound(0)
+    return () => {
+      started.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart])
+
   const status =
     phase === 'show'
       ? 'Memorize the sequence'
@@ -117,25 +132,48 @@ export function MemoryTest({
         onCancel()
       }}
       status={status}
+      current={round + 1}
+      total={LENGTHS.length}
     >
-      <div className="flex h-44 flex-col items-center justify-center rounded-xl border border-white/10 bg-navy text-center">
-        {phase === 'intro' && (
+      <div
+        className={`glass flex h-48 flex-col items-center justify-center rounded-3xl border-2 text-center transition-[border-color,box-shadow] duration-200 ${
+          phase === 'feedback'
+            ? lastCorrect
+              ? 'border-ok/70 shadow-[0_0_50px_-8px_rgb(74_222_128/0.5)]'
+              : 'border-orange/70 shadow-[0_0_50px_-8px_rgb(252_109_38/0.5)]'
+            : phase === 'show'
+              ? 'border-violet/50'
+              : 'border-white/15'
+        }`}
+      >
+        {phase === 'intro' && !autoStart && (
           <button type="button" className="btn btn-primary" onClick={() => startRound(0)} autoFocus>
             Start memory test
           </button>
         )}
         {phase === 'show' && (
-          <div className="font-mono text-7xl font-medium text-cyan" aria-hidden="true">
+          <div
+            className={`num flex h-32 w-28 items-center justify-center rounded-3xl border-2 font-display text-7xl font-semibold transition-[background-color,border-color,box-shadow,color] duration-150 ${
+              shownIdx !== null
+                ? 'border-violet-soft bg-violet/25 text-white shadow-[0_0_50px_6px_rgb(139_92_246/0.5)]'
+                : 'border-white/15 bg-white/5 text-muted'
+            }`}
+            aria-hidden="true"
+          >
             {shownIdx !== null ? sequence[shownIdx] : '·'}
           </div>
         )}
         {phase === 'recall' && (
-          <div className="flex gap-2" aria-label={`Entered ${input.length} of ${sequence.length}`}>
+          <div className="flex flex-wrap justify-center gap-2 px-2" aria-label={`Entered ${input.length} of ${sequence.length}`}>
             {Array.from({ length: sequence.length }, (_, i) => (
               <span
                 key={i}
-                className={`flex h-14 w-10 items-center justify-center rounded-lg border font-mono text-3xl ${
-                  i < input.length ? 'border-cyan text-white' : 'border-white/20 text-muted'
+                className={`num flex h-14 w-10 items-center justify-center rounded-xl border font-display text-3xl transition-[background-color,border-color,box-shadow] duration-150 ${
+                  i < input.length
+                    ? 'border-cyan bg-cyan/15 text-white shadow-[0_0_16px_rgb(85_198_232/0.55)]'
+                    : i === input.length
+                      ? 'border-violet-soft/70 bg-white/5 text-muted'
+                      : 'border-white/20 bg-white/5 text-muted'
                 }`}
               >
                 {input[i] ?? ''}
@@ -145,22 +183,26 @@ export function MemoryTest({
         )}
         {phase === 'feedback' && (
           <div>
-            <p className={`text-xl font-semibold ${lastCorrect ? 'text-ok' : 'text-orange'}`}>
+            <p className={`font-display text-xl font-semibold ${lastCorrect ? 'text-ok' : 'text-orange'}`}>
               {lastCorrect ? 'Correct' : 'Not quite'}
             </p>
-            <p className="font-mono text-2xl tracking-[0.3em]">{sequence}</p>
+            <p className="num mt-1 font-display text-2xl tracking-[0.3em]">{sequence}</p>
           </div>
         )}
       </div>
 
-      <div className="mx-auto mt-4 grid max-w-xs grid-cols-5 gap-2" role="group" aria-label="Digit pad">
+      <div
+        className="mx-auto mt-4 grid max-w-xs grid-cols-3 gap-2 sm:max-w-md sm:grid-cols-5"
+        role="group"
+        aria-label="Digit pad"
+      >
         {'1234567890'.split('').map((d) => (
           <button
             key={d}
             type="button"
             disabled={phase !== 'recall'}
             onClick={() => press(d)}
-            className="h-12 rounded-lg border border-white/20 font-mono text-lg transition-colors hover:border-cyan hover:text-cyan disabled:opacity-40"
+            className="num glass h-12 rounded-2xl font-display text-lg font-medium text-white transition-[border-color,box-shadow,transform,opacity] hover:border-cyan hover:text-cyan-bright hover:shadow-[0_0_18px_rgb(85_198_232/0.4)] active:scale-95 disabled:opacity-40 disabled:hover:shadow-none"
           >
             {d}
           </button>

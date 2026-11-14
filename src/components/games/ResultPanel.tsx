@@ -1,6 +1,9 @@
-import { ArrowLeft, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Minus, RotateCcw } from 'lucide-react'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { pctDelta, round1 } from '../../lib/stats'
 import type { AssessmentResult, AssessmentType, Baseline } from '../../types'
+import { missionFor } from '../assessment/missions'
 import { ProgressRing } from '../ui/ProgressRing'
 
 const INFO: Record<AssessmentType, { title: string; measures: string; formula: string }> = {
@@ -51,7 +54,7 @@ function Comparison({
 }) {
   if (reference === undefined) {
     return (
-      <div className="rounded-lg border border-white/10 bg-navy/60 p-3">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="label-mono">{title}</div>
         <p className="mt-1 text-sm text-muted">{emptyText ?? 'No earlier result.'}</p>
       </div>
@@ -62,20 +65,46 @@ function Comparison({
   const better = lowerBetter ? diff < 0 : diff > 0
   const same = Math.abs(pct) < 1
   const sign = diff > 0 ? '+' : ''
+  const Arrow = same ? Minus : diff > 0 ? ArrowUp : ArrowDown
+  const tone = same ? 'text-muted' : better ? 'text-ok' : 'text-orange'
   return (
-    <div className="rounded-lg border border-white/10 bg-navy/60 p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <div className="label-mono">{title}</div>
-      <div className="mt-1 font-mono text-lg">
+      <div className="num mt-1 font-display text-2xl font-semibold">
         {round1(reference)}
-        {unit && <span className="text-sm text-muted"> {unit}</span>}
+        {unit && <span className="text-sm font-normal text-muted"> {unit}</span>}
       </div>
-      <div className={`font-mono text-sm ${same ? 'text-muted' : better ? 'text-ok' : 'text-orange'}`}>
-        {sign}
-        {round1(diff)} {unit} ({sign}
-        {round1(pct)}%) · {same ? 'about the same' : better ? 'better' : 'lower than reference'}
+      <div className={`num mt-1 flex items-start gap-1.5 text-sm ${tone}`}>
+        <Arrow size={16} aria-hidden="true" className="mt-0.5 shrink-0" />
+        <span>
+          {sign}
+          {round1(diff)} {unit} ({sign}
+          {round1(pct)}%) · {same ? 'about the same' : better ? 'better' : 'lower than reference'}
+        </span>
       </div>
     </div>
   )
+}
+
+/** Counts up to `target` over ~900 ms; returns the target immediately for reduced-motion users. */
+function useCountUp(target: number, reduced: boolean) {
+  const [v, setV] = useState(reduced ? target : 0)
+  useEffect(() => {
+    if (reduced) {
+      setV(target)
+      return
+    }
+    let raf = 0
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 900)
+      setV(Math.round(target * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, reduced])
+  return v
 }
 
 export function ResultPanel({
@@ -92,22 +121,37 @@ export function ResultPanel({
   onBack: () => void
 }) {
   const info = INFO[result.type]
+  const m = missionFor(result.type)
   const p = primary(result)
   const prevP = previous ? primary(previous).value : undefined
+  const reduced = useReducedMotion()
+  const shown = useCountUp(result.score, reduced)
 
   return (
-    <section className="panel fade-in p-4 md:p-6" aria-label={`${info.title} results`}>
-      <h2 className="mb-1 text-lg font-semibold">{info.title}: results</h2>
-      <p className="mb-5 font-mono text-[11px] uppercase tracking-wider text-muted">
-        Saved to your history · monitoring indicator, not a medical diagnosis
+    <section
+      className="glass-strong glass-accent fade-in mx-auto w-full max-w-3xl p-5 md:p-8"
+      style={{ '--accent': m.accent.main } as CSSProperties}
+      aria-label={`${info.title} results`}
+    >
+      <p className="label-mono" style={{ color: m.accent.soft }}>
+        Mission complete: {m.mission}
       </p>
+      <h2 className="font-display text-2xl font-bold text-white md:text-3xl">{info.title}: results</h2>
+      <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-ok/40 bg-ok/10 px-3 py-1 text-xs text-ok">
+        <CheckCircle2 size={14} aria-hidden="true" /> Saved to your history
+      </p>
+      <p className="mt-2 text-xs text-muted">Monitoring indicator, not a medical diagnosis.</p>
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-center">
-        <ProgressRing value={result.score} size={140} label="Score">
-          <span className="font-mono text-4xl font-medium">{result.score}</span>
-          <span className="label-mono">score</span>
-        </ProgressRing>
-        <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mt-6 flex flex-col items-center gap-6 md:flex-row md:items-center">
+        <div className="relative" style={{ filter: `drop-shadow(0 0 22px ${m.accent.glow})` }}>
+          <ProgressRing value={reduced ? result.score : shown} size={176} color={m.accent.main} label="Score">
+            <span className="num font-display text-5xl font-bold text-white" aria-hidden="true">
+              {shown}
+            </span>
+            <span className="label-mono">score</span>
+          </ProgressRing>
+        </div>
+        <div className="grid w-full flex-1 grid-cols-2 gap-3 sm:grid-cols-3">
           <Stat label={p.label} value={`${round1(p.value)}${p.unit ? ' ' + p.unit : ''}`} />
           {result.type === 'reaction' && (
             <>
@@ -150,21 +194,21 @@ export function ResultPanel({
         />
       </div>
 
-      <div className="mt-6 rounded-lg border border-cyan/25 bg-navy/60 p-4">
-        <h3 className="text-sm font-semibold text-cyan">What this measures</h3>
+      <div className="mt-6 rounded-2xl border border-cyan/25 bg-white/5 p-4">
+        <h3 className="font-display text-sm font-semibold text-cyan-bright">What this measures</h3>
         <p className="mt-1 text-sm text-white/90">{info.measures}</p>
-        <p className="mt-2 font-mono text-xs text-muted">{info.formula}</p>
+        <p className="num mt-2 text-xs text-muted">{info.formula}</p>
         <p className="mt-2 text-xs text-muted">
           A single session is a snapshot. It is a monitoring indicator, not a medical diagnosis.
         </p>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" className="btn btn-primary" onClick={onRetry}>
+        <button type="button" className="btn btn-primary" onClick={onRetry} autoFocus>
           <RotateCcw size={16} aria-hidden="true" /> Run again
         </button>
         <button type="button" className="btn btn-ghost" onClick={onBack}>
-          <ArrowLeft size={16} aria-hidden="true" /> Back to tests
+          <ArrowLeft size={16} aria-hidden="true" /> Back to missions
         </button>
       </div>
     </section>
@@ -173,9 +217,9 @@ export function ResultPanel({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-navy/60 p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
       <div className="label-mono">{label}</div>
-      <div className="mt-1 font-mono text-lg">{value}</div>
+      <div className="num mt-1 font-display text-xl font-semibold">{value}</div>
     </div>
   )
 }

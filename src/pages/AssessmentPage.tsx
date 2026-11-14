@@ -1,41 +1,16 @@
-import { Brain, Crosshair, Timer, type LucideIcon } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AttentionTest } from '../components/games/AttentionTest'
-import { MemoryTest } from '../components/games/MemoryTest'
-import { ReactionTest } from '../components/games/ReactionTest'
-import { ResultPanel } from '../components/games/ResultPanel'
-import { PageTitle } from '../components/ui/controls'
+import { EmptyArt } from '../components/art/EmptyArt'
+import { MissionCard } from '../components/assessment/MissionCard'
+import { MISSIONS, missionFor } from '../components/assessment/missions'
+import { TestStage } from '../components/assessment/TestStage'
+import { EmptyState } from '../components/ui/EmptyState'
+import { DemoBadge } from '../components/ui/StatusBadge'
 import { formatDateTime, ofType } from '../lib/stats'
 import { useApp } from '../store/AppStore'
 import type { AssessmentResult, AssessmentType, GameResult } from '../types'
 
-const TESTS: { type: AssessmentType; title: string; icon: LucideIcon; duration: string; desc: string; measures: string }[] = [
-  {
-    type: 'reaction',
-    title: 'Reaction Time',
-    icon: Timer,
-    duration: '~1 min',
-    desc: 'Wait for the arena to turn green, then react as fast as you can. Five trials.',
-    measures: 'Processing speed and alertness',
-  },
-  {
-    type: 'memory',
-    title: 'Memory',
-    icon: Brain,
-    duration: '~2 min',
-    desc: 'Watch a digit sequence, then type it from memory. Five rounds, 4 to 8 digits.',
-    measures: 'Working memory',
-  },
-  {
-    type: 'attention',
-    title: 'Attention',
-    icon: Crosshair,
-    duration: '~40 s',
-    desc: 'Respond only to the triangle target in a stream of 36 symbols.',
-    measures: 'Sustained attention and impulse control',
-  },
-]
+const Brain = lazy(() => import('../components/art/Brain').then((m) => ({ default: m.Brain })))
 
 const isType = (v: string | null): v is AssessmentType => v === 'reaction' || v === 'memory' || v === 'attention'
 
@@ -45,12 +20,14 @@ export function AssessmentPage() {
   const initial = params.get('test')
   const [active, setActive] = useState<AssessmentType | null>(isType(initial) ? initial : null)
   const [runKey, setRunKey] = useState(0)
+  const [retrying, setRetrying] = useState(false)
   const [outcome, setOutcome] = useState<{ result: AssessmentResult; previous?: AssessmentResult } | null>(null)
   const latest = useRef(assessments)
   latest.current = assessments
 
-  const launch = (t: AssessmentType) => {
+  const launch = (t: AssessmentType, retry = false) => {
     setOutcome(null)
+    setRetrying(retry)
     setActive(t)
     setRunKey((k) => k + 1)
   }
@@ -66,63 +43,88 @@ export function AssessmentPage() {
     setOutcome({ result, previous })
   }
 
+  const recent = [...assessments].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 6)
+
   return (
-    <div>
-      <PageTitle
-        title="Cognitive Assessment"
-        subtitle="Short, playable tests of reaction speed, memory and attention. Results are saved locally and feed your trends and alerts. Monitoring indicators, not medical diagnoses."
-      />
-
-      {active && outcome && (
-        <ResultPanel
-          result={outcome.result}
-          previous={outcome.previous}
-          baseline={baseline}
-          onRetry={() => launch(active)}
-          onBack={back}
-        />
-      )}
-
-      {active && !outcome && (
-        <div key={runKey}>
-          {active === 'reaction' && <ReactionTest onComplete={complete} onCancel={back} />}
-          {active === 'memory' && <MemoryTest onComplete={complete} onCancel={back} />}
-          {active === 'attention' && <AttentionTest onComplete={complete} onCancel={back} />}
+    <div className="space-y-8">
+      <section
+        aria-labelledby="deck-title"
+        className="glass relative isolate overflow-hidden rounded-[2rem] p-6 md:p-10"
+        style={{ background: 'linear-gradient(135deg, rgb(11 20 48 / .9), rgb(42 45 110 / .7) 60%, rgb(59 31 122 / .6))' }}
+      >
+        <div aria-hidden="true" className="pointer-events-none absolute -top-4 -right-4 -z-10 w-64 opacity-70 md:right-6 md:w-96">
+          <Suspense fallback={<div className="aspect-square w-full rounded-full bg-violet/20" />}>
+            <Brain />
+          </Suspense>
         </div>
-      )}
+        <p className="label-mono text-cyan-bright">Mission training deck</p>
+        <h1 id="deck-title" className="mt-1 font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
+          Cognitive assessments
+        </h1>
+        <p className="mt-3 max-w-xl text-sm text-white/85 md:text-base">
+          Short, playable missions that test reaction speed, memory and attention. Results are saved locally and feed
+          your trends and alerts. Monitoring indicators, not medical diagnoses.
+        </p>
+        <div className="mt-4">
+          <DemoBadge />
+        </div>
+      </section>
 
-      {!active && (
-        <div className="grid gap-4 md:grid-cols-3">
-          {TESTS.map((t) => {
-            const last = ofType(assessments, t.type).at(-1)
-            const Icon = t.icon
-            return (
-              <article key={t.type} className="panel fade-in flex flex-col p-5 transition-colors hover:border-cyan/50">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy text-cyan">
-                    <Icon size={22} aria-hidden="true" />
+      <section aria-label="Available missions" className="grid gap-4 md:grid-cols-3 md:gap-6">
+        {MISSIONS.map((m) => (
+          <MissionCard key={m.type} mission={m} last={ofType(assessments, m.type).at(-1)} onStart={() => launch(m.type)} />
+        ))}
+      </section>
+
+      <section aria-labelledby="recent-title">
+        <h2 id="recent-title" className="mb-3 font-display text-xl font-semibold text-white">
+          Recent sessions
+        </h2>
+        {recent.length === 0 ? (
+          <EmptyState
+            art={<EmptyArt scene="no-assessments" />}
+            title="No assessments yet"
+            body="Launch a mission above to record your first session."
+          />
+        ) : (
+          <ul className="glass divide-y divide-white/10 p-1">
+            {recent.map((r) => {
+              const m = missionFor(r.type)
+              return (
+                <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <span className="flex items-center gap-3">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: m.accent.main, boxShadow: `0 0 10px ${m.accent.glow}` }}
+                      aria-hidden="true"
+                    />
+                    <span className="text-white">{m.title}</span>
+                    <span className="hidden text-muted sm:inline">{r.source === 'seed' ? 'Simulated' : 'You'}</span>
                   </span>
-                  <span className="label-mono">{t.duration}</span>
-                </div>
-                <h2 className="text-lg font-semibold">{t.title} Test</h2>
-                <p className="label-mono mt-0.5 normal-case tracking-normal">{t.measures}</p>
-                <p className="mt-3 flex-1 text-sm text-white/85">{t.desc}</p>
-                <div className="mt-4 border-t border-white/10 pt-3 font-mono text-xs text-muted">
-                  {last ? (
-                    <>
-                      Last score <span className="text-white">{last.score}</span> · {formatDateTime(last.timestamp)}
-                    </>
-                  ) : (
-                    'No sessions yet'
-                  )}
-                </div>
-                <button type="button" className="btn btn-primary mt-4" onClick={() => launch(t.type)}>
-                  Start {t.title.toLowerCase()} test
-                </button>
-              </article>
-            )
-          })}
-        </div>
+                  <span className="flex items-center gap-4 text-muted">
+                    <span className="num hidden sm:inline">{formatDateTime(r.timestamp)}</span>
+                    <span>
+                      Score <span className="num text-base font-semibold text-white">{r.score}</span>
+                    </span>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+
+      {active && (
+        <TestStage
+          key={runKey}
+          type={active}
+          startAt={retrying ? 'countdown' : 'instructions'}
+          outcome={outcome}
+          baseline={baseline}
+          onComplete={complete}
+          onAbort={back}
+          onRetry={() => launch(active, true)}
+        />
       )}
     </div>
   )

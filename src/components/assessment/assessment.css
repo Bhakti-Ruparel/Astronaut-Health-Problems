@@ -1,0 +1,82 @@
+/* Mission stage, countdown and arena effects. Motion is gated; reduced-motion users get static states. */
+
+.mission-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 35%, rgb(7 13 31 / 0.85) 100%);
+}
+
+.countdown-ring {
+  stroke-dasharray: 565.49;
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .countdown-ring {
+    animation: ring-sweep 1s linear forwards;
+  }
+  .countdown-num {
+    animation: count-pop 1s ease-out forwards;
+  }
+  .shake {
+    animation: arena-shake 0.4s ease-in-out;
+  }
+  .stage-in {
+    animation: stage-in 0.35s ease-out both;
+  }
+}
+
+@keyframes ring-sweep {
+  from {
+    stroke-dashoffset: 565.49;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes count-pop {
+  0% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.85);
+    opacity: 0.2;
+  }
+}
+
+@keyframes arena-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
