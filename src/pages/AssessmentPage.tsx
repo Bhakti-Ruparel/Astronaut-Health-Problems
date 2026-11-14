@@ -52,7 +52,7 @@ export function AssessmentPage() {
         className="glass relative isolate overflow-hidden rounded-[2rem] p-6 md:p-10"
         style={{ background: 'linear-gradient(135deg, rgb(11 20 48 / .9), rgb(42 45 110 / .7) 60%, rgb(59 31 122 / .6))' }}
       >
-        <div aria-hidden="true" className="pointer-events-none absolute -top-4 -right-4 -z-10 w-64 opacity-70 md:right-6 md:w-96">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-8 -right-12 -z-10 w-44 opacity-35 sm:w-56 sm:opacity-50 md:-top-4 md:right-6 md:w-96 md:opacity-70">
           <Suspense fallback={<div className="aspect-square w-full rounded-full bg-violet/20" />}>
             <Brain />
           </Suspense>

@@ -79,7 +79,15 @@ function Comparison({
         <span>
           {sign}
           {round1(diff)} {unit} ({sign}
-          {round1(pct)}%) · {same ? 'about the same' : better ? 'better' : 'lower than reference'}
+          {round1(pct)}%) · {same
+            ? 'about the same'
+            : better
+              ? lowerBetter
+                ? 'faster'
+                : 'better'
+              : lowerBetter
+                ? 'slower than reference'
+                : 'lower than reference'}
         </span>
       </div>
     </div>

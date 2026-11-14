@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, Cell, LabelList, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { BaselineChart, TOOLTIP_STYLE } from '../components/ui/BaselineChart'
 import { ChartCard, EmptyChart } from '../components/ui/ChartCard'
 import { PageTitle, SectionHeader, SegmentedControl } from '../components/ui/controls'
@@ -211,7 +211,11 @@ export function TrendsPage() {
             <EmptyChart />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={diffs} layout="vertical" margin={{ top: 4, right: 48, bottom: 0, left: 8 }}>
+              <BarChart
+                data={diffs.map((d) => ({ ...d, label: `${d.name} ${d.value > 0 ? '+' : ''}${d.value}%` }))}
+                layout="vertical"
+                margin={{ top: 4, right: 16, bottom: 0, left: 8 }}
+              >
                 <CartesianGrid stroke="rgba(244,247,250,0.09)" horizontal={false} />
                 <XAxis
                   type="number"
@@ -221,7 +225,7 @@ export function TrendsPage() {
                   axisLine={{ stroke: 'rgba(244,247,250,0.25)' }}
                   tickFormatter={(v) => `${v}%`}
                 />
-                <YAxis type="category" dataKey="name" width={110} tick={{ fill: '#F4F7FA', fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis type="category" dataKey="label" width={120} tick={{ fill: '#F4F7FA', fontSize: 12 }} tickLine={false} axisLine={false} />
                 <ReferenceLine x={0} stroke="#F4F7FA" strokeDasharray="5 4" strokeOpacity={0.7} />
                 <Tooltip
                   {...TOOLTIP_STYLE}
@@ -232,12 +236,6 @@ export function TrendsPage() {
                   {diffs.map((d) => (
                     <Cell key={d.name} fill={d.value >= -3 ? '#4ade80' : '#FC6D26'} />
                   ))}
-                  <LabelList
-                    dataKey="value"
-                    position="right"
-                    formatter={(v: unknown) => `${Number(v) > 0 ? '+' : ''}${v}%`}
-                    style={{ fill: '#F4F7FA', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}
-                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
