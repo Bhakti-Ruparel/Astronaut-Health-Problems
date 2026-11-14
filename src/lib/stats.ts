@@ -93,6 +93,30 @@ export function dailySeries<T extends { date: string }>(
     .map(([date, vs]) => ({ date, label: formatDate(date), value: round1(mean(vs)) }))
 }
 
+/** Date key of the Monday that starts the week containing `key`. */
+function weekStartKey(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7))
+  return dateKey(dt)
+}
+
+/** Mean per Monday-start week. Labels read like "Wk of Mar 3". */
+export function weeklySeries(points: DayPoint[]): DayPoint[] {
+  const groups = new Map<string, number[]>()
+  for (const p of points) {
+    const k = weekStartKey(p.date)
+    groups.set(k, [...(groups.get(k) ?? []), p.value])
+  }
+  return [...groups.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, vs]) => ({ date, label: `Wk of ${formatDate(date)}`, value: round1(mean(vs)) }))
+}
+
+export function bucketSeries(points: DayPoint[], mode: 'daily' | 'weekly'): DayPoint[] {
+  return mode === 'weekly' ? weeklySeries(points) : points
+}
+
 export function assessmentSeries(
   assessments: AssessmentResult[],
   type: AssessmentType,
