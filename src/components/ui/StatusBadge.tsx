@@ -3,12 +3,12 @@ import type { ReactNode } from 'react'
 export type Tone = 'nominal' | 'watch' | 'attention' | 'info' | 'measured' | 'self'
 
 const TONES: Record<Tone, { cls: string; dot: string }> = {
-  nominal: { cls: 'bg-ok/15 text-ok border-ok/40', dot: 'bg-ok' },
-  watch: { cls: 'bg-orange/15 text-[#ffa275] border-orange/40', dot: 'bg-orange' },
-  attention: { cls: 'bg-red-400/15 text-red-300 border-red-300/40', dot: 'bg-red-300' },
+  nominal: { cls: 'bg-ok/15 text-[#86efac] border-ok/40', dot: 'bg-ok' },
+  watch: { cls: 'bg-orange/15 text-[#ffb38f] border-orange/40', dot: 'bg-orange' },
+  attention: { cls: 'bg-red-400/15 text-red-200 border-red-300/40', dot: 'bg-red-300' },
   info: { cls: 'bg-cyan/15 text-cyan-bright border-cyan/40', dot: 'bg-cyan' },
   measured: { cls: 'bg-cyan/15 text-cyan-bright border-cyan/50', dot: 'bg-cyan' },
-  self: { cls: 'bg-orange/5 text-[#ffa275] border-orange/60', dot: 'bg-orange' },
+  self: { cls: 'bg-orange/5 text-[#ffb38f] border-orange/60', dot: 'bg-orange' },
 }
 
 export function StatusBadge({ tone, children }: { tone: Tone; children: ReactNode }) {

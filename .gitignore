@@ -2,3 +2,16 @@ node_modules
 dist
 *.local
 *.tsbuildinfo
+*.log
+
+# agent scratch (keep .agents/tasks/task.md tracked)
+.agents/*.log
+.agents/*.txt
+.agents/*.cmd
+.agents/*.mjs
+.agents/tasks/shots/
+.agents/tasks/plan.md
+.agents/tasks/redesign-plan.md
+.agents/tasks/review.*
+.agents/tasks/verification.md
+.agents/tasks/task-astromind-space-redesign/
