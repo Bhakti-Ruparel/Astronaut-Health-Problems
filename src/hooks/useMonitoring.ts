@@ -46,8 +46,12 @@ export function useMonitoring() {
         const result: unknown = await response.json()
         if (!response.ok) {
           const message =
-            result && typeof result === 'object' && 'error' in result && typeof result.error === 'string'
-              ? result.error
+            result && typeof result === 'object'
+              ? 'error' in result && typeof result.error === 'string'
+                ? result.error
+                : 'detail' in result && typeof result.detail === 'string'
+                  ? result.detail
+                  : 'Monitoring data could not be loaded.'
               : 'Monitoring data could not be loaded.'
           throw new Error(message)
         }
