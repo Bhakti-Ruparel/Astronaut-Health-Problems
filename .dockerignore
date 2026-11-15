@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+!.env.example
+.env.local
+node_modules
+dist
+astronaut-credentials.csv
+__pycache__
+*.py[cod]

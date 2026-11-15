@@ -13,7 +13,7 @@ import type {
   Preferences,
 } from '../types'
 
-const KEY = 'astromind:v1'
+const KEY_PREFIX = 'astromind:v1:'
 
 interface PersistedState {
   assessments: AssessmentResult[]
@@ -29,8 +29,8 @@ function freshState(): PersistedState {
   return { ...seed, preferences: DEFAULT_PREFERENCES, dismissed: {} }
 }
 
-function loadState(): PersistedState {
-  const saved = readStorage<PersistedState>(KEY)
+function loadState(key: string): PersistedState {
+  const saved = readStorage<PersistedState>(key)
   if (
     saved &&
     Array.isArray(saved.assessments) &&
@@ -65,16 +65,17 @@ interface AppContextValue extends PersistedState {
 
 const AppContext = createContext<AppContextValue | null>(null)
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PersistedState>(loadState)
+export function AppProvider({ children, userId }: { children: ReactNode; userId: string }) {
+  const storageKey = `${KEY_PREFIX}${encodeURIComponent(userId)}`
+  const [state, setState] = useState<PersistedState>(() => loadState(storageKey))
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(KEY, JSON.stringify(state))
+      window.localStorage.setItem(storageKey, JSON.stringify(state))
     } catch {
       /* ignore storage failures */
     }
-  }, [state])
+  }, [state, storageKey])
 
   const allAlerts = useMemo(
     () => computeAlerts(state.assessments, state.journal, state.baseline, state.preferences),
@@ -160,14 +161,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetDemo = useCallback(() => {
     try {
-      Object.keys(window.localStorage)
-        .filter((k) => k.startsWith('astromind:'))
-        .forEach((k) => window.localStorage.removeItem(k))
+      window.localStorage.removeItem(storageKey)
     } catch {
       /* ignore */
     }
     setState(freshState())
-  }, [])
+  }, [storageKey])
 
   const value: AppContextValue = {
     ...state,

@@ -12,14 +12,14 @@ import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/500.css'
 import './index.css'
 import App from './App'
-import { AppProvider } from './store/AppStore'
+import { AuthProvider } from './store/AuthStore'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <AppProvider>
+      <AuthProvider>
         <App />
-      </AppProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

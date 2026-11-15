@@ -29,6 +29,8 @@ export const NAV_ITEMS: {
   { path: '/journal', label: 'Health Journal', short: 'Journal', icon: NotebookPen, mobile: 'more' },
   { path: '/trends', label: 'Health Trends', short: 'Trends', icon: TrendingUp, mobile: 'tab' },
   { path: '/alerts', label: 'Alerts', short: 'Alerts', icon: BellRing, mobile: 'tab' },
+  { path: '/monitoring', label: 'Live Monitoring', short: 'Monitor', icon: Activity, mobile: 'more' },
+  { path: '/body-map', label: 'Body Map', short: 'Body Map', icon: UserRound, mobile: 'more' },
   { path: '/profile', label: 'Profile', short: 'Profile', icon: UserRound, mobile: 'more' },
 ]
 

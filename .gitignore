@@ -3,6 +3,9 @@ dist
 *.local
 *.tsbuildinfo
 *.log
+__pycache__/
+*.py[cod]
+astronaut-credentials.csv
 
 # agent scratch (keep .agents/tasks/task.md tracked)
 .agents/*.log
