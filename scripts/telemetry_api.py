@@ -7,7 +7,7 @@ from typing import Optional
 
 import psycopg
 import uvicorn
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 
 from neon_data import connect
@@ -17,6 +17,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("astromind.telemetry")
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 LIVE_STALE_SECONDS = 180
+
+
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+def healthcheck(request: Request):
+    if request.method == "HEAD":
+        return Response(status_code=200)
+    return {"status": "ok"}
 
 
 class MonitoringRequest(BaseModel):
