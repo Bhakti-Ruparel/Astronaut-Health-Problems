@@ -27,7 +27,7 @@ def healthcheck(request: Request):
 
 
 class MonitoringRequest(BaseModel):
-    userId: str
+    astronautId: str = "C001"
 
 
 def require_internal_token(authorization: Optional[str]):
@@ -49,25 +49,13 @@ def read_monitoring(
     authorization: Optional[str] = Header(default=None),
 ):
     require_internal_token(authorization)
+    astronaut_id = payload.astronautId.strip()
+    if not astronaut_id:
+        raise HTTPException(status_code=400, detail="An astronaut ID is required.")
+
     for attempt in range(3):
         try:
             with connect() as connection:
-                account = connection.execute(
-                    """
-                    SELECT astronaut_id
-                    FROM astronaut_web_accounts
-                    WHERE auth_user_id = %s
-                    LIMIT 1
-                    """,
-                    (payload.userId,),
-                ).fetchone()
-                if not account:
-                    raise HTTPException(
-                        status_code=403,
-                        detail="This account is not assigned to an astronaut.",
-                    )
-
-                astronaut_id = account["astronaut_id"]
                 readings = connection.execute(
                     """
                     SELECT *
@@ -96,8 +84,6 @@ def read_monitoring(
                     (astronaut_id, astronaut_id),
                 ).fetchall()
             break
-        except HTTPException:
-            raise
         except psycopg.OperationalError as error:
             if attempt == 2:
                 logger.error("Monitoring query failed (%s) after retries.", type(error).__name__)

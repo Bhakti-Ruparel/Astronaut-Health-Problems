@@ -1,8 +1,6 @@
 FROM node:22-bookworm-slim AS frontend-build
 
 WORKDIR /app
-ARG VITE_NEON_AUTH_URL
-ENV VITE_NEON_AUTH_URL=${VITE_NEON_AUTH_URL}
 
 COPY package.json package-lock.json ./
 RUN npm ci

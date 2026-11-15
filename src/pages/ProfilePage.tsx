@@ -1,4 +1,4 @@
-import { LogOut, RefreshCw, RotateCcw } from 'lucide-react'
+import { RefreshCw, RotateCcw } from 'lucide-react'
 import { Suspense, lazy, useState, type CSSProperties, type ReactNode } from 'react'
 import { OrbitRings } from '../components/art'
 import { PageTitle, SectionHeader, Toggle } from '../components/ui/controls'
@@ -7,7 +7,6 @@ import { ASTRONAUT, DISCLAIMER, MISSION } from '../data/constants'
 import { ACCENTS } from '../lib/theme'
 import { formatDateTime } from '../lib/stats'
 import { useApp } from '../store/AppStore'
-import { useAuth } from '../store/AuthStore'
 import type { AlertRuleId, AssessmentResult } from '../types'
 
 const Astronaut = lazy(() => import('../components/art/Astronaut').then((m) => ({ default: m.Astronaut })))
@@ -78,10 +77,7 @@ function Slider({
 
 export function ProfilePage() {
   const { assessments, baseline, preferences, updatePreferences, recalibrateBaseline, resetDemo } = useApp()
-  const { user, signOut } = useAuth()
   const [showAll, setShowAll] = useState(false)
-  const [signingOut, setSigningOut] = useState(false)
-  const [signOutError, setSignOutError] = useState<string | null>(null)
   const history = [...assessments].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
   const rows = showAll ? history : history.slice(0, 15)
 
@@ -102,32 +98,12 @@ export function ProfilePage() {
         right={<DemoBadge label="Fictional sample profile" />}
       />
 
-      <section className="glass mb-5 flex flex-wrap items-center justify-between gap-4 p-4 md:p-5" aria-label="Neon account">
+      <section className="glass mb-5 p-4 md:p-5" aria-label="Demo access">
         <div>
-          <div className="label-mono mb-1">Neon account</div>
-          <p className="font-medium">{user?.email}</p>
-          <p className="mt-1 text-xs text-muted">Your app records are separated by this account on this browser.</p>
-          {signOutError && <p className="mt-2 text-sm text-orange-200" role="alert">{signOutError}</p>}
+          <div className="label-mono mb-1">Public demo session</div>
+          <p className="font-medium">No account or credentials required</p>
+          <p className="mt-1 text-xs text-muted">Demo records are saved locally in this browser.</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-ghost"
-          disabled={signingOut}
-          onClick={async () => {
-            setSigningOut(true)
-            setSignOutError(null)
-            try {
-              await signOut()
-            } catch (error) {
-              setSignOutError(error instanceof Error ? error.message : 'Could not sign out.')
-            } finally {
-              setSigningOut(false)
-            }
-          }}
-        >
-          <LogOut size={16} aria-hidden="true" />
-          {signingOut ? 'Signing out…' : 'Sign out'}
-        </button>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">

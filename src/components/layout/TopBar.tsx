@@ -3,19 +3,11 @@ import { Link } from 'react-router-dom'
 import { MISSION } from '../../data/constants'
 import { useMissionClock } from '../../hooks/useMissionClock'
 import { useApp } from '../../store/AppStore'
-import { useAuth } from '../../store/AuthStore'
 import { Wordmark } from '../ui/Wordmark'
 
 export function TopBar() {
   const met = useMissionClock()
   const { alerts } = useApp()
-  const { user } = useAuth()
-  const initials = user?.name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('') || user?.email.slice(0, 1).toUpperCase() || 'U'
   return (
     <header className="glass-strong sticky top-3 z-30 mx-3 mt-3 flex min-h-14 items-center gap-3 rounded-full px-3 py-1.5 md:top-5 md:mx-5 md:mt-5 md:px-5">
       <Link to="/" className="rounded-full md:hidden" aria-label="AstroMind home">
@@ -64,10 +56,10 @@ export function TopBar() {
         <Link
           to="/profile"
           className="flex h-11 w-11 items-center justify-center rounded-full bg-linear-to-br from-cyan to-violet text-sm font-bold text-void"
-          aria-label={`Account profile: ${user?.email ?? 'signed in'}`}
-          title={user?.email}
+          aria-label="Demo profile"
+          title="Public demo"
         >
-          {initials}
+          D
         </Link>
       </div>
     </header>

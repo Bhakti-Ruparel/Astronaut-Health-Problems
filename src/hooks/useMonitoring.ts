@@ -40,7 +40,6 @@ export function useMonitoring() {
       inFlight = true
       try {
         const response = await fetch('/api/monitoring', {
-          credentials: 'include',
           cache: 'no-store',
         })
         const result: unknown = await response.json()

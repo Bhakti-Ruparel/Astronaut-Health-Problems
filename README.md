@@ -2,16 +2,16 @@
 
 AstroMind is a NASA-inspired astronaut health and cognitive-wellness monitoring
 prototype. It combines model-scored telemetry with cognitive assessments and
-self-reported wellness data in an astronaut-focused web interface.
+self-reported wellness data in an astronaut-focused web interface. The demo
+opens without sign-in or evaluator credentials.
 
 All data is fictional or simulated. AstroMind is not affiliated with or
 endorsed by NASA, and its monitoring indicators are not medical diagnoses.
 
 ## Project features
 
-- **Astronaut accounts:** Neon Auth identities are mapped to astronaut IDs.
-  The server scopes telemetry to the astronaut associated with the signed-in
-  account.
+- **Public demo:** Monitoring defaults to astronaut `C001`; its historical
+  records and app data are demo content.
 - **Telemetry monitoring:** View imported readings, vital-sign summaries,
   anomaly scores, model classifications, flagged features, and recent records.
 - **Interactive body map:** Explore body-region summaries based on the latest
@@ -28,11 +28,8 @@ endorsed by NASA, and its monitoring indicators are not medical diagnoses.
 
 - **Frontend:** React, TypeScript, and Vite provide the dashboard, assessment,
   journal, trends, monitoring, and body-map pages.
-- **Authentication and API:** A Node.js service proxies Neon Auth and verifies
-  the current session. A Python API queries telemetry using a server-only
-  Neon Postgres connection.
-- **Account isolation:** The API resolves the astronaut ID from the verified
-  Neon user mapping. The browser cannot select another astronaut's telemetry.
+- **API:** A Node.js service proxies monitoring requests to a Python API.
+  The Python API queries Neon using a server-only Postgres connection.
 - **Reference telemetry:** The Neon `astro_reference_telemetry` table contains
   7,200 imported records across five astronaut IDs. The records are analyzed
   with the project's trained anomaly model.
@@ -40,16 +37,15 @@ endorsed by NASA, and its monitoring indicators are not medical diagnoses.
   `health_telemetry`. The web interface polls the API every five seconds, but
   readings only change when an external telemetry producer writes new data.
 - **App records:** Cognitive assessment results, journal entries, and
-  preferences are stored in browser local storage, scoped to the signed-in
-  account on that browser. They are not synchronized between devices.
+  preferences are stored in browser local storage on that browser. They are
+  not synchronized between devices.
 
 ## Monitoring limitations
 
 The web app does not generate live sensor readings. Without an active producer,
 the monitoring pages show the imported historical records and do not update
-with new telemetry. The current BLE phone producer tags its readings as
-`ASTR-001`, so its live readings are associated with that astronaut account.
-Cloud updates can also lag behind a producer's sync interval.
+with new telemetry. Cloud updates can also lag behind a producer's sync
+interval.
 
 Model scores, anomaly indicators, seeded histories, and profiles are for
 demonstration only. They are not clinically validated.
